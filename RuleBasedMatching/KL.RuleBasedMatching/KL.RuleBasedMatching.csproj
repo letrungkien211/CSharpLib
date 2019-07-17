@@ -9,6 +9,7 @@
     <RepositoryUrl>https://github.com/letrungkien211/CSharpLib/RuleBasedMatching</RepositoryUrl>
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>rule,matching</PackageTags>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>

@@ -7,19 +7,26 @@ using System.Runtime.CompilerServices;
 
 namespace KL.RuleBasedMatching
 {
+    /// <summary>
+    /// Indexing matching rules
+    /// </summary>
     public class RuleBasedIndex
     {
         private int MaxIndexLen { get; }
         internal IDictionary<string, List<MatchingRuleItem>> RuleItems { get; } = new Dictionary<string, List<MatchingRuleItem>>();
         internal IDictionary<string, List<MatchingRuleItem>> Perfect { get; set; } = new Dictionary<string, List<MatchingRuleItem>>();
 
+        /// <summary>
+        /// Indexing matching rules
+        /// </summary>
+        /// <param name="maxIndexLen"></param>
         public RuleBasedIndex(int maxIndexLen)
         {
             MaxIndexLen = maxIndexLen;
         }
 
         /// <summary>
-        /// Add rule item
+        /// Add matching rule
         /// </summary>
         /// <param name="matchingRuleItem"></param>
         public void Add(MatchingRuleItem matchingRuleItem)

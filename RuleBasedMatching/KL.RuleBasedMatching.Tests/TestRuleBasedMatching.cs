@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -37,7 +37,7 @@ namespace KL.RuleBasedMatching.Tests
                     continue;
                 }
 
-                ruleBasedIndex.Add(MatchingRuleItem.Create(splits[0].Split(';').Where(x=> !string.IsNullOrEmpty(x)), splits.ToList().GetRange(2, splits.Length-2), ruleType));
+                ruleBasedIndex.Add(MatchingRuleItem.Create(splits[0].Split(';').Where(x => !string.IsNullOrEmpty(x)), splits.ToList().GetRange(2, splits.Length - 2), ruleType));
             }
 
             var stopWatch = Stopwatch.StartNew();
@@ -72,6 +72,32 @@ namespace KL.RuleBasedMatching.Tests
             OutputHelper.WriteLine($"Elapsed={stopWatch.Elapsed}");
             OutputHelper.WriteLine($"Elapsed={stopWatch.ElapsedMilliseconds}");
 
+        }
+        [Fact]
+        public void NotMatch()
+        {
+            var ruleBasedIndex = new RuleBasedIndex(5);
+
+            foreach (var line in File.ReadLines("RuleBasedMatchingData.tsv"))
+            {
+                var splits = line.Split('\t');
+                if (splits.Length < 3)
+                {
+                    OutputHelper.WriteLine($"[ERROR] Invalid line: {line}");
+                    continue;
+                }
+
+                if (!Enum.TryParse(splits[1], true, out MatchingRuleType ruleType))
+                {
+                    OutputHelper.WriteLine($"[ERROR] Invalid ruletype: {line}");
+                    continue;
+                }
+
+                ruleBasedIndex.Add(MatchingRuleItem.Create(splits[0].Split(';').Where(x => !string.IsNullOrEmpty(x)), splits.ToList().GetRange(2, splits.Length - 2), ruleType));
+            }
+
+            Assert.Empty(ruleBasedIndex.Retrieve("ajfdkjfkd"));
+            Assert.Empty(ruleBasedIndex.Retrieve("明日"));
         }
     }
 }
