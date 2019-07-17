@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <Copyright>MIT</Copyright>
+    <Description>Rule based matching</Description>
+    <PackageProjectUrl>https://github.com/letrungkien211/CSharpLib/RuleBasedMatching</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/letrungkien211/CSharpLib/RuleBasedMatching</RepositoryUrl>
+    <RepositoryType>GIT</RepositoryType>
+    <PackageTags>rule,matching</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+  </ItemGroup>
+
+</Project>

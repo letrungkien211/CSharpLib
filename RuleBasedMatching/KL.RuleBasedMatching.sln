@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28803.452
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "KL.RuleBasedMatching", "KL.RuleBasedMatching\KL.RuleBasedMatching.csproj", "{12B9CA98-9AFE-456D-A25A-290BEF86843E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KL.RuleBasedMatching.Tests", "KL.RuleBasedMatching.Tests\KL.RuleBasedMatching.Tests.csproj", "{E3ACCB66-096F-4E4C-AE25-894EB6936384}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{12B9CA98-9AFE-456D-A25A-290BEF86843E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12B9CA98-9AFE-456D-A25A-290BEF86843E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12B9CA98-9AFE-456D-A25A-290BEF86843E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12B9CA98-9AFE-456D-A25A-290BEF86843E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3ACCB66-096F-4E4C-AE25-894EB6936384}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3ACCB66-096F-4E4C-AE25-894EB6936384}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3ACCB66-096F-4E4C-AE25-894EB6936384}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3ACCB66-096F-4E4C-AE25-894EB6936384}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {248884D3-D650-49B0-9875-DE3DD199684D}
+	EndGlobalSection
+EndGlobal
