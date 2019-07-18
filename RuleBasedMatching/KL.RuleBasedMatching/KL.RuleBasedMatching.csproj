@@ -10,6 +10,7 @@
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>rule,matching</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

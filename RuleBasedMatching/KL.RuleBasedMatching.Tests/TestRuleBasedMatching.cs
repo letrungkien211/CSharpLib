@@ -20,7 +20,7 @@ namespace KL.RuleBasedMatching.Tests
         [Fact]
         public void Match()
         {
-            var ruleBasedIndex = new RuleBasedIndex(5);
+            var ruleBasedIndex = RuleBasedIndexFactory.Create(5) as RuleBasedIndex;
 
             foreach (var line in File.ReadLines("RuleBasedMatchingData.tsv"))
             {
@@ -102,9 +102,9 @@ namespace KL.RuleBasedMatching.Tests
         [Fact]
         public void MatchWithPatterns()
         {
-            var ruleBasedIndex = new RuleBasedWithPatternsIndex(5,
+            var ruleBasedIndex = RuleBasedIndexFactory.Create(5,
                 File.ReadLines("RuleBasedMatchingWithPatternsData-Patterns.tsv").Select(x => x.Split('\t'))
-                .Where(y => y.Length >= 3).ToDictionary(z => z[0], z => z.Skip(2).ToList()));
+                .Where(y => y.Length >= 3).ToDictionary(z => z[0], z => z.Skip(2).ToList())) as RuleBasedWithPatternsIndex;
 
             foreach (var line in File.ReadLines("RuleBasedMatchingWithPatternsData.tsv"))
             {

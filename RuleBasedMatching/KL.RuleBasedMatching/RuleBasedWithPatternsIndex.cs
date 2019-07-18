@@ -9,7 +9,7 @@ namespace KL.RuleBasedMatching
     /// <summary>
     /// Indexing matching rules
     /// </summary>
-    public class RuleBasedWithPatternsIndex
+    internal class RuleBasedWithPatternsIndex : IRuleBasedIndex
     {
         private int MaxIndexLen { get; }
         internal IDictionary<string, List<string>> PatternToPhrases { get; set; }

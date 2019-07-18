@@ -10,7 +10,7 @@ namespace KL.RuleBasedMatching
     /// <summary>
     /// Indexing matching rules
     /// </summary>
-    public class RuleBasedIndex
+    internal class RuleBasedIndex : IRuleBasedIndex
     {
         private int MaxIndexLen { get; }
         internal IDictionary<string, List<MatchingRuleItem>> RuleItems { get; } = new Dictionary<string, List<MatchingRuleItem>>();
@@ -92,7 +92,7 @@ namespace KL.RuleBasedMatching
 
             // Further check if rule matches or not
             var matches = new List<MatchingRuleItem>();
-            foreach(var candidate in candidates)
+            foreach (var candidate in candidates)
             {
                 if (candidate.KeyWords.All(str.Contains))
                 {
