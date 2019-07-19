@@ -19,7 +19,7 @@ namespace KL.AzureBlobSync
         }
         public Exception Ex { get; set; }
     }
-    
+
     public enum FileSyncResultStatus
     {
         Skip,
@@ -241,10 +241,10 @@ namespace KL.AzureBlobSync
             return blockBlob.DownloadToFileAsync(localFilePath, FileMode.Create);
         }
 
-        public async Task<bool> ExistsAsync(string path)
+        public Task<bool> ExistsAsync(string path)
         {
-            var blockBlob = await _blobContainer.GetBlobReferenceFromServerAsync(_folder + path).ConfigureAwait(false);
-            return await blockBlob.ExistsAsync().ConfigureAwait(false);
+            var blockBlob = _blobContainer.GetBlockBlobReference(_folder + path);
+            return blockBlob.ExistsAsync();
         }
     }
 
@@ -314,6 +314,5 @@ namespace KL.AzureBlobSync
         public string TargetStorageId { get; set; }
         public string TargetContainer { get; set; }
         public string TargetPath { get; set; }
-        public bool Enabled { get; set; }
     }
 }
