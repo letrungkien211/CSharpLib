@@ -2,12 +2,31 @@
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
 namespace KL.AzureBlobSync
 {
+    public class FileSyncResult
+    {
+        public FileSyncResultStatus Status { get; set; }
+        public bool IsErrorStatus()
+        {
+            return Status == FileSyncResultStatus.Error;
+        }
+        public Exception Ex { get; set; }
+    }
+    
+    public enum FileSyncResultStatus
+    {
+        Skip,
+        SourceNotFound,
+        Updated,
+        Error
+    }
+
     /// <summary>
     /// Synchronize files across storages.
     /// </summary>
@@ -42,8 +61,9 @@ namespace KL.AzureBlobSync
         /// </summary>
         /// <param name="syncFilePairs"></param>
         /// <returns></returns>
-        public async Task<bool> RunAsync(IEnumerable<SyncFilePair> syncFilePairs)
+        public async Task<IEnumerable<FileSyncResult>> RunAsync(IEnumerable<SyncFilePair> syncFilePairs)
         {
+            var results = new List<FileSyncResult>();
             foreach (var pair in syncFilePairs)
             {
                 try
@@ -53,6 +73,10 @@ namespace KL.AzureBlobSync
 
                     if (!await sourceClient.ExistsAsync(pair.SourcePath).ConfigureAwait(false))
                     {
+                        results.Add(new FileSyncResult()
+                        {
+                            Status = FileSyncResultStatus.SourceNotFound
+                        });
                         continue;
                     }
 
@@ -62,8 +86,6 @@ namespace KL.AzureBlobSync
 
                     if (sourceLastModified > targetLastModified)
                     {
-                        //_logger.InfoFormat("Sync pair {0}", JsonConvert.SerializeObject(pair));
-
                         var tempFile = Path.GetTempFileName();
                         try
                         {
@@ -74,15 +96,30 @@ namespace KL.AzureBlobSync
                         {
                             File.Delete(tempFile);
                         }
+                        results.Add(new FileSyncResult()
+                        {
+                            Status = FileSyncResultStatus.Updated
+                        });
+                    }
+                    else
+                    {
+                        results.Add(new FileSyncResult()
+                        {
+                            Status = FileSyncResultStatus.Skip
+                        });
                     }
                 }
                 catch (Exception ex)
                 {
-                    //_logger.Error($"Failed to sync pair {JsonConvert.SerializeObject(pair)}", ex);
+                    results.Add(new FileSyncResult()
+                    {
+                        Status = FileSyncResultStatus.Error,
+                        Ex = ex
+                    });
                 }
             }
 
-            return true;
+            return results;
         }
 
         /// <summary>
