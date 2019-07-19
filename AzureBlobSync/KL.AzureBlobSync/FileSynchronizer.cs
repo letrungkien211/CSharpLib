@@ -5,6 +5,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace KL.AzureBlobSync
@@ -60,12 +61,15 @@ namespace KL.AzureBlobSync
         /// Synchronize files
         /// </summary>
         /// <param name="syncFilePairs"></param>
+        /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<FileSyncResult>> RunAsync(IEnumerable<SyncFilePair> syncFilePairs)
+        public async Task<IEnumerable<FileSyncResult>> RunAsync(IEnumerable<SyncFilePair> syncFilePairs, CancellationToken cancellationToken)
         {
             var results = new List<FileSyncResult>();
             foreach (var pair in syncFilePairs)
             {
+                if (cancellationToken.IsCancellationRequested)
+                    break;
                 try
                 {
                     var sourceClient = GetStorage(pair.SourceStorageId, pair.SourceContainer);
