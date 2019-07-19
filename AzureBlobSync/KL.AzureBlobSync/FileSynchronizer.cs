@@ -51,14 +51,14 @@ namespace KL.AzureBlobSync
                     var sourceClient = GetStorage(pair.SourceStorageId, pair.SourceContainer);
                     var targetClient = GetStorage(pair.TargetStorageId, pair.TargetContainer);
 
-                    if (!await sourceClient.ExistsAsync(pair.SourcePath))
+                    if (!await sourceClient.ExistsAsync(pair.SourcePath).ConfigureAwait(false))
                     {
                         continue;
                     }
 
-                    var sourceLastModified = await sourceClient.GetLastModifiedAsync(pair.SourcePath);
+                    var sourceLastModified = await sourceClient.GetLastModifiedAsync(pair.SourcePath).ConfigureAwait(false);
 
-                    var targetLastModified = await targetClient.ExistsAsync(pair.TargetPath) ? await targetClient.GetLastModifiedAsync(pair.TargetPath) : DateTime.MinValue;
+                    var targetLastModified = await targetClient.ExistsAsync(pair.TargetPath).ConfigureAwait(false) ? await targetClient.GetLastModifiedAsync(pair.TargetPath).ConfigureAwait(false) : DateTime.MinValue;
 
                     if (sourceLastModified > targetLastModified)
                     {
@@ -67,8 +67,8 @@ namespace KL.AzureBlobSync
                         var tempFile = Path.GetTempFileName();
                         try
                         {
-                            await sourceClient.DownloadToFileAsync(pair.SourcePath, tempFile);
-                            await targetClient.UploadFileAsync(tempFile, pair.TargetPath);
+                            await sourceClient.DownloadToFileAsync(pair.SourcePath, tempFile).ConfigureAwait(false);
+                            await targetClient.UploadFileAsync(tempFile, pair.TargetPath).ConfigureAwait(false);
                         }
                         finally
                         {
@@ -134,11 +134,11 @@ namespace KL.AzureBlobSync
             return Task.FromResult(0);
         }
 
-        public async Task DownloadToFileAsync(string storagePath, string targetFilePath)
+        public Task DownloadToFileAsync(string storagePath, string targetFilePath)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(_prefix, storagePath)));
             File.Copy(Path.Combine(_prefix, storagePath), targetFilePath);
-            await Task.FromResult(0);
+            return Task.FromResult(0);
         }
 
         public Task<bool> ExistsAsync(string path)
@@ -188,7 +188,7 @@ namespace KL.AzureBlobSync
 
         public async Task<DateTime> GetLastModifiedAsync(string path)
         {
-            var blockBlob = await _blobContainer.GetBlobReferenceFromServerAsync(_folder + path);
+            var blockBlob = await _blobContainer.GetBlobReferenceFromServerAsync(_folder + path).ConfigureAwait(false);
             if (blockBlob?.Properties.LastModified != null)
                 return ((DateTimeOffset)blockBlob.Properties.LastModified).DateTime;
             return DateTime.MinValue;
@@ -202,8 +202,8 @@ namespace KL.AzureBlobSync
 
         public async Task<bool> ExistsAsync(string path)
         {
-            var blockBlob = await _blobContainer.GetBlobReferenceFromServerAsync(_folder + path);
-            return await blockBlob.ExistsAsync();
+            var blockBlob = await _blobContainer.GetBlobReferenceFromServerAsync(_folder + path).ConfigureAwait(false);
+            return await blockBlob.ExistsAsync().ConfigureAwait(false);
         }
     }
 

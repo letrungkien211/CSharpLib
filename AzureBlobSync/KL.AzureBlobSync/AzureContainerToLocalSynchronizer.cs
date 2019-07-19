@@ -50,7 +50,7 @@ namespace KL.AzureBlobSync
         public async Task<IEnumerable<BlobSyncResult>> SyncToLocalAsync(string containerName, string prefix, string localDirectory, CancellationToken cancellationToken)
         {
             var container = CloudBlobClient.GetContainerReference(containerName);
-            if (!await container.ExistsAsync())
+            if (!await container.ExistsAsync().ConfigureAwait(false))
                 throw new DirectoryNotFoundException($"AccountName={AccountName}, Container={container} is not found!");
 
             BlobContinuationToken blobContinuationToken = null;
@@ -61,7 +61,7 @@ namespace KL.AzureBlobSync
                     true,
                     BlobListingDetails.None,
                     null,
-                    blobContinuationToken, null, null, cancellationToken);
+                    blobContinuationToken, null, null, cancellationToken).ConfigureAwait(false);
                 blobContinuationToken = blobs.ContinuationToken;
 
                 foreach (var blob in blobs.Results)
@@ -98,7 +98,7 @@ namespace KL.AzureBlobSync
                     {
                         try
                         {
-                            await cloudBlockBlob.DownloadToFileAsync(localPath, FileMode.Create, null, null, null, null, cancellationToken);
+                            await cloudBlockBlob.DownloadToFileAsync(localPath, FileMode.Create, null, null, null, null, cancellationToken).ConfigureAwait(false);
                             if (!fileInfo.Exists)
                             {
                                 fileInfo = new FileInfo(localPath);
