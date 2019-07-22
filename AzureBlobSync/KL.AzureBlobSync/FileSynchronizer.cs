@@ -1,6 +1,8 @@
 ﻿using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using Microsoft.WindowsAzure.Storage.Table;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -20,6 +22,7 @@ namespace KL.AzureBlobSync
         public Exception Ex { get; set; }
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
     public enum FileSyncResultStatus
     {
         Skip,
