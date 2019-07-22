@@ -90,7 +90,7 @@ namespace KL.AzureBlobSync
 
                     if (sourceLastModified > targetLastModified)
                     {
-                        var tempFile = Path.GetTempFileName();
+                        var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + ".temp");
                         try
                         {
                             await sourceClient.DownloadToFileAsync(pair.SourcePath, tempFile).ConfigureAwait(false);
@@ -98,7 +98,8 @@ namespace KL.AzureBlobSync
                         }
                         finally
                         {
-                            File.Delete(tempFile);
+                            if (File.Exists(tempFile))
+                                File.Delete(tempFile);
                         }
                         results.Add(new FileSyncResult()
                         {
@@ -165,19 +166,23 @@ namespace KL.AzureBlobSync
 
         public Task<DateTime> GetLastModifiedAsync(string path)
         {
-            return Task.FromResult(File.GetLastWriteTimeUtc(path));
+            return Task.FromResult(File.GetLastWriteTimeUtc(Path.Combine(_prefix, path)));
         }
 
         public Task UploadFileAsync(string localFilePath, string storagePath)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(_prefix, storagePath)));
+            var directoryName = Path.GetDirectoryName(Path.Combine(_prefix, storagePath));
+            if (!string.IsNullOrEmpty(directoryName))
+                Directory.CreateDirectory(directoryName);
             File.Copy(localFilePath, Path.Combine(_prefix, storagePath));
             return Task.FromResult(0);
         }
 
         public Task DownloadToFileAsync(string storagePath, string targetFilePath)
         {
-            Directory.CreateDirectory(Path.GetDirectoryName(Path.Combine(_prefix, storagePath)));
+            var directoryName = Path.GetDirectoryName(Path.Combine(_prefix, storagePath));
+            if (!string.IsNullOrEmpty(directoryName))
+                Directory.CreateDirectory(directoryName);
             File.Copy(Path.Combine(_prefix, storagePath), targetFilePath);
             return Task.FromResult(0);
         }
