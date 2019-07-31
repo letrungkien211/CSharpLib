@@ -1,8 +1,5 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,7 +29,7 @@ namespace KL.AzureBlobSync
         /// <returns></returns>
         public Task<IEnumerable<FolderItemSyncResult>> SyncFolderAsync(CancellationToken cancellationToken)
         {
-            var files = Directory.GetFiles(SourceFolder, "*", SearchOption.AllDirectories);
+            var files = LocalFileUtils.ListFiles(SourceFolder);
 
             var blobSyncResults = new List<FolderItemSyncResult>();
             foreach (var file in files)
