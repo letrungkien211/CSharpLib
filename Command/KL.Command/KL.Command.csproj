@@ -3,11 +3,9 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.0</Version>
-    <Authors>trule@microsoft.com</Authors>
-    <Company>Microsoft</Company>
-    <Product>Rinna</Product>
-    <Description>Rinna Image Magick</Description>
+    <Version>1.1.0</Version>
+    <Authors>letrungkien211</Authors>
+    <Description>Execute exe wrapper</Description>
     <PackageReleaseNotes></PackageReleaseNotes>
     <IncludeSymbols>True</IncludeSymbols>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
