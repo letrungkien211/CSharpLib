@@ -16,5 +16,16 @@ namespace KL.AzureBlobSync
         {
             return new SelfLocalSynchronizer(folder, syncFilePath);
         }
+
+        /// <summary>
+        /// Sync local folder to another folder
+        /// </summary>
+        /// <param name="sourceFolder"></param>
+        /// <param name="targetFolder"></param>
+        /// <returns></returns>
+        public IFolderSynchronizer CreateLocalToLocalFolderSynchronizer(string sourceFolder, string targetFolder)
+        {
+            return new LocalToLocalSynchronizer(sourceFolder, targetFolder);
+        }
     }
 }
