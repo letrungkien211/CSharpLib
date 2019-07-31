@@ -7,7 +7,7 @@ namespace KL.AzureBlobSync
     /// Blob sync result
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum BlobSyncResultEnum
+    public enum FolderItemSyncResultEnum
     {
         /// <summary>
         /// Skip

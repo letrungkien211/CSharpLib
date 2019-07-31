@@ -12,54 +12,38 @@ namespace KL.AzureBlobSync
     /// <summary>
     /// Azure blob synchronizer. Copy the latest version from azure blob storage to local
     /// </summary>
-    public class AzureContainerToLocalSynchronizer : IFolderSynchronizer
+    internal class AzureContainerToLocalSynchronizer : IFolderSynchronizer
     {
-        private CloudBlobClient CloudBlobClient { get; }
-        private string AccountName { get; set; }
+        private CloudBlobContainer Container { get; }
+        private string Prefix { get; }
+        private string TargetLocalFolder { get; }
 
         /// <summary>
         /// Azure blob synchronizer. Copy the latest version from azure blob storage to local
         /// </summary>
-        /// <param name="cloudBlobClient"></param>
-        public AzureContainerToLocalSynchronizer(CloudBlobClient cloudBlobClient)
+        /// <param name="container"></param>
+        /// <param name="prefix"></param>
+        /// <param name="targetLocalFolder"></param>
+        public AzureContainerToLocalSynchronizer(CloudBlobContainer container, string prefix, string targetLocalFolder)
         {
-            CloudBlobClient = cloudBlobClient;
-            AccountName = CloudBlobClient.Credentials.AccountName;
+            Container = container;
+            Prefix = prefix;
+            TargetLocalFolder = targetLocalFolder;
         }
 
-        /// <summary>
-        /// Azure blob synchronizer. Copy the latest version from azure blob storage to local
-        /// </summary>
-        /// <param name="options"></param>
-        public AzureContainerToLocalSynchronizer(AzureContainerToLocalOptions options)
-        {
-            var storageCredentials = new StorageCredentials(options.AccountName, options.AccountKey);
-            var cloudStorageAccount = new CloudStorageAccount(storageCredentials, true);
-            CloudBlobClient = cloudStorageAccount.CreateCloudBlobClient();
-            AccountName = options.AccountName;
-        }
 
         /// <summary>
         /// Sync to local
         /// </summary>
-        /// <param name="sourceFolder"></param>
-        /// <param name="targetFolder"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<BlobSyncResult>> SyncFolderAsync(string sourceFolder, string targetFolder, CancellationToken cancellationToken)
+        public async Task<IEnumerable<FolderItemSyncResult>> SyncFolderAsync(CancellationToken cancellationToken)
         {
-            var containerName = sourceFolder.Split('/')[0];
-            var slashIndex = sourceFolder.IndexOf('/');
-            var prefix = slashIndex!= -1 && slashIndex < sourceFolder.Length-1 ? sourceFolder.Substring(sourceFolder.IndexOf('/') + 1) : "";
-            var container = CloudBlobClient.GetContainerReference(containerName);
-            if (!await container.ExistsAsync().ConfigureAwait(false))
-                throw new DirectoryNotFoundException($"AccountName={AccountName}, Container={container} is not found!");
-
             BlobContinuationToken blobContinuationToken = null;
-            var ret = new List<BlobSyncResult>();
+            var ret = new List<FolderItemSyncResult>();
             while (!cancellationToken.IsCancellationRequested)
             {
-                var blobs = await container.ListBlobsSegmentedAsync(prefix,
+                var blobs = await Container.ListBlobsSegmentedAsync(Prefix,
                     true,
                     BlobListingDetails.None,
                     null,
@@ -72,8 +56,8 @@ namespace KL.AzureBlobSync
                         break;
                     if (!(blob is CloudBlockBlob cloudBlockBlob)) continue;
 
-                    var nameWithoutPrefix = cloudBlockBlob.Name.Substring(prefix.Length);
-                    var localPath = Path.Combine(targetFolder, nameWithoutPrefix);
+                    var nameWithoutPrefix = cloudBlockBlob.Name.Substring(Prefix.Length);
+                    var localPath = Path.Combine(TargetLocalFolder, nameWithoutPrefix);
 
                     var fileInfo = new FileInfo(localPath);
 
@@ -105,33 +89,33 @@ namespace KL.AzureBlobSync
                             {
                                 fileInfo = new FileInfo(localPath);
                             }
-                            ret.Add(new BlobSyncResult()
+                            ret.Add(new FolderItemSyncResult()
                             {
                                 Path = nameWithoutPrefix,
                                 LastModified = fileInfo.LastWriteTimeUtc,
                                 Ex = null,
-                                Result = BlobSyncResultEnum.UpdateSuccess
+                                Result = FolderItemSyncResultEnum.UpdateSuccess
                             });
                         }
                         catch (Exception ex)
                         {
-                            ret.Add(new BlobSyncResult()
+                            ret.Add(new FolderItemSyncResult()
                             {
                                 Path = nameWithoutPrefix,
                                 LastModified = fileInfo.LastWriteTimeUtc,
                                 Ex = ex,
-                                Result = BlobSyncResultEnum.UpdateFailure
+                                Result = FolderItemSyncResultEnum.UpdateFailure
                             });
                         }
                     }
                     else
                     {
-                        ret.Add(new BlobSyncResult()
+                        ret.Add(new FolderItemSyncResult()
                         {
                             Path = nameWithoutPrefix,
                             LastModified = fileInfo.LastWriteTimeUtc,
                             Ex = null,
-                            Result = BlobSyncResultEnum.Skip
+                            Result = FolderItemSyncResultEnum.Skip
                         });
                     }
                 }

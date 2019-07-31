@@ -12,10 +12,8 @@ namespace KL.AzureBlobSync
         /// <summary>
         /// Sync folder async
         /// </summary>
-        /// <param name="sourceFolder"></param>
-        /// <param name="targetFolder"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task<IEnumerable<BlobSyncResult>> SyncFolderAsync(string sourceFolder, string targetFolder, CancellationToken cancellationToken);
+        Task<IEnumerable<FolderItemSyncResult>> SyncFolderAsync(CancellationToken cancellationToken);
     }
 }

@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -10,55 +11,49 @@ namespace KL.AzureBlobSync
     /// <summary>
     /// Self local synchrnoizer
     /// </summary>
-    public class SelfLocalSynchronizer : IFolderSynchronizer
+    internal class SelfLocalSynchronizer : IFolderSynchronizer
     {
-        private class TempFileInfo
-        {
-            public DateTimeOffset LastModified { get; set; }
-        }
         /// <summary>
         /// Self local synchronizer
         /// </summary>
-        public SelfLocalSynchronizer(string syncFilePath)
+        public SelfLocalSynchronizer(string folder, string syncFilePath)
         {
-            SyncFilePath = syncFilePath;
+            Folder = folder ?? throw new ArgumentNullException(nameof(folder));
+            SyncFilePath = syncFilePath ?? throw new ArgumentNullException(nameof(syncFilePath));
         }
 
+        private string Folder { get; }
         private string SyncFilePath { get; }
 
         /// <summary>
         /// Sync
         /// </summary>
-        /// <param name="sourceFolder"></param>
-        /// <param name="targetFolder"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<IEnumerable<BlobSyncResult>> SyncFolderAsync(string sourceFolder, string targetFolder, CancellationToken cancellationToken)
+        public Task<IEnumerable<FolderItemSyncResult>> SyncFolderAsync(CancellationToken cancellationToken)
         {
-            if (sourceFolder == null) throw new ArgumentNullException(nameof(sourceFolder));
-            if (targetFolder == null) throw new ArgumentNullException(nameof(targetFolder));
+            if (Folder == null) throw new ArgumentNullException(nameof(Folder));
 
-            if (sourceFolder != targetFolder)
-                throw new ArgumentException($"{nameof(SelfLocalSynchronizer)} only supports sync the same folder to itself.");
+            var fileInfos = JsonConvert.DeserializeObject<Dictionary<string, FolderItemSyncResult>>(File.Exists(SyncFilePath) ? File.ReadAllText(SyncFilePath) : "{}");
 
-            var fileInfos = JsonConvert.DeserializeObject<Dictionary<string, TempFileInfo>>(File.Exists(SyncFilePath) ? File.ReadAllText(SyncFilePath) : "{}");
+            var files = Directory.GetFiles(Folder, "*", SearchOption.AllDirectories);
 
-            var files = Directory.GetFiles(sourceFolder, "*", SearchOption.AllDirectories);
-
-            var blobSyncResults = new List<BlobSyncResult>();
+            var blobSyncResults = new List<FolderItemSyncResult>();
             foreach (var file in files)
             {
-                var result = new BlobSyncResult()
+                var result = new FolderItemSyncResult()
                 {
                     Path = file
                 };
-                var path = Path.Combine(sourceFolder, file);
+                var path = Path.Combine(Folder, file);
                 var lastModified = File.GetLastWriteTimeUtc(path);
                 if (!fileInfos.TryGetValue(file, out var fileInfo))
                 {
-                    fileInfo = new TempFileInfo()
+                    fileInfo = new FolderItemSyncResult()
                     {
-                        LastModified = DateTimeOffset.MinValue
+                        LastModified = DateTimeOffset.MinValue,
+                        Result = FolderItemSyncResultEnum.Skip,
+                        Path = file
                     };
                 }
 
@@ -66,16 +61,18 @@ namespace KL.AzureBlobSync
                 {
                     fileInfo.LastModified = lastModified;
                     fileInfos[path] = fileInfo;
-                    result.Result = BlobSyncResultEnum.UpdateSuccess;
+                    result.Result = FolderItemSyncResultEnum.UpdateSuccess;
                 }
                 else
                 {
-                    result.Result = BlobSyncResultEnum.Skip;
+                    result.Result = FolderItemSyncResultEnum.Skip;
                 }
                 result.LastModified = lastModified;
                 blobSyncResults.Add(result);
             }
-            return Task.FromResult<IEnumerable<BlobSyncResult>>(blobSyncResults);
+            var newFileInfos = blobSyncResults.ToDictionary(x => x.Path, y => y);
+            File.WriteAllText(SyncFilePath, JsonConvert.SerializeObject(newFileInfos));
+            return Task.FromResult<IEnumerable<FolderItemSyncResult>>(blobSyncResults);
         }
     }
 }

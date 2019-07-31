@@ -5,7 +5,7 @@ namespace KL.AzureBlobSync
     /// <summary>
     /// Blob sync result
     /// </summary>
-    public class BlobSyncResult
+    public class FolderItemSyncResult
     {
         /// <summary>
         /// Path (without prefix)
@@ -20,7 +20,7 @@ namespace KL.AzureBlobSync
         /// <summary>
         /// Sync result
         /// </summary>
-        public BlobSyncResultEnum Result { get; set; }
+        public FolderItemSyncResultEnum Result { get; set; }
 
         /// <summary>
         /// Exception
