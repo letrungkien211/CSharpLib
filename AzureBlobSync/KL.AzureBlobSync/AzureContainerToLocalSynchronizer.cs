@@ -12,7 +12,7 @@ namespace KL.AzureBlobSync
     /// <summary>
     /// Azure blob synchronizer. Copy the latest version from azure blob storage to local
     /// </summary>
-    public class AzureContainerToLocalSynchronizer
+    public class AzureContainerToLocalSynchronizer : IFolderSynchronizer
     {
         private CloudBlobClient CloudBlobClient { get; }
         private string AccountName { get; set; }
@@ -42,13 +42,15 @@ namespace KL.AzureBlobSync
         /// <summary>
         /// Sync to local
         /// </summary>
-        /// <param name="containerName"></param>
-        /// <param name="prefix"></param>
-        /// <param name="localDirectory"></param>
+        /// <param name="sourceFolder"></param>
+        /// <param name="targetFolder"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public async Task<IEnumerable<BlobSyncResult>> SyncToLocalAsync(string containerName, string prefix, string localDirectory, CancellationToken cancellationToken)
+        public async Task<IEnumerable<BlobSyncResult>> SyncFolderAsync(string sourceFolder, string targetFolder, CancellationToken cancellationToken)
         {
+            var containerName = sourceFolder.Split('/')[0];
+            var slashIndex = sourceFolder.IndexOf('/');
+            var prefix = slashIndex!= -1 && slashIndex < sourceFolder.Length-1 ? sourceFolder.Substring(sourceFolder.IndexOf('/') + 1) : "";
             var container = CloudBlobClient.GetContainerReference(containerName);
             if (!await container.ExistsAsync().ConfigureAwait(false))
                 throw new DirectoryNotFoundException($"AccountName={AccountName}, Container={container} is not found!");
@@ -71,7 +73,7 @@ namespace KL.AzureBlobSync
                     if (!(blob is CloudBlockBlob cloudBlockBlob)) continue;
 
                     var nameWithoutPrefix = cloudBlockBlob.Name.Substring(prefix.Length);
-                    var localPath = Path.Combine(localDirectory, nameWithoutPrefix);
+                    var localPath = Path.Combine(targetFolder, nameWithoutPrefix);
 
                     var fileInfo = new FileInfo(localPath);
 
