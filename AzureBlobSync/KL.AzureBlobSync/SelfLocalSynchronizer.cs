@@ -32,8 +32,6 @@ namespace KL.AzureBlobSync
         /// <returns></returns>
         public Task<IEnumerable<FolderItemSyncResult>> SyncFolderAsync(CancellationToken cancellationToken)
         {
-            if (Folder == null) throw new ArgumentNullException(nameof(Folder));
-
             var fileInfos = JsonConvert.DeserializeObject<Dictionary<string, FolderItemSyncResult>>(File.Exists(SyncFilePath) ? File.ReadAllText(SyncFilePath) : "{}");
 
             var files = Directory.GetFiles(Folder, "*", SearchOption.AllDirectories);
