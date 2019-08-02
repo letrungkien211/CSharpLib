@@ -99,6 +99,15 @@ namespace KL.AzureBlobSync
                         }
                         catch (Exception ex)
                         {
+                            try
+                            {
+                                if (File.Exists(localPath))
+                                    File.Delete(localPath);
+                            }
+                            catch
+                            {
+                                //
+                            }
                             ret.Add(new FolderItemSyncResult()
                             {
                                 Path = nameWithoutPrefix,
