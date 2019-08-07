@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,26 +39,35 @@ namespace KL.AzureBlobSync
                 {
                     Path = file
                 };
-                var sourcePath = Path.Combine(SourceFolder, file);
-                var sourceLastModified = File.GetLastWriteTimeUtc(sourcePath);
+                try
+                {
+                    var sourcePath = Path.Combine(SourceFolder, file);
+                    var sourceLastModified = File.GetLastWriteTimeUtc(sourcePath);
 
-                var targetPath = Path.Combine(TargetFolder, file);
-                if (!File.Exists(targetPath))
-                {
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                }
-                var targetLastModified = File.GetLastWriteTimeUtc(targetPath);
+                    var targetPath = Path.Combine(TargetFolder, file);
+                    if (!File.Exists(targetPath))
+                    {
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                    }
+                    var targetLastModified = File.GetLastWriteTimeUtc(targetPath);
 
-                if (sourceLastModified > targetLastModified)
-                {
-                    File.Copy(sourcePath, targetPath, true);
-                    result.Result = FolderItemSyncResultEnum.UpdateSuccess;
+                    result.LastModified = sourceLastModified > targetLastModified ? sourceLastModified : targetLastModified;
+                    if (sourceLastModified > targetLastModified)
+                    {
+                        File.Copy(sourcePath, targetPath, true);
+                        result.Result = FolderItemSyncResultEnum.UpdateSuccess;
+                    }
+                    else
+                    {
+                        result.Result = FolderItemSyncResultEnum.Skip;
+                    }
+                    blobSyncResults.Add(result);
                 }
-                else
+                catch(Exception ex)
                 {
-                    result.Result = FolderItemSyncResultEnum.Skip;
+                    result.Result = FolderItemSyncResultEnum.UpdateFailure;
+                    result.Ex = ex;
                 }
-                blobSyncResults.Add(result);
             }
             return Task.FromResult<IEnumerable<FolderItemSyncResult>>(blobSyncResults);
         }
