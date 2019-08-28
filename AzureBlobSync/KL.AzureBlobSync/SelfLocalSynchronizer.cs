@@ -11,7 +11,7 @@ namespace KL.AzureBlobSync
     /// <summary>
     /// Self local synchrnoizer
     /// </summary>
-    internal class SelfLocalSynchronizer : IFolderSynchronizer
+    internal class SelfLocalSynchronizer : FolderSynchronizerBase
     {
         /// <summary>
         /// Self local synchronizer
@@ -30,7 +30,7 @@ namespace KL.AzureBlobSync
         /// </summary>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        public Task<IEnumerable<FolderItemSyncResult>> SyncFolderAsync(CancellationToken cancellationToken)
+        public override Task<IEnumerable<FolderItemSyncResult>> SyncFolderAsync(CancellationToken cancellationToken)
         {
             var fileInfos = JsonConvert.DeserializeObject<Dictionary<string, FolderItemSyncResult>>(File.Exists(SyncFilePath) ? File.ReadAllText(SyncFilePath) : "{}");
 
