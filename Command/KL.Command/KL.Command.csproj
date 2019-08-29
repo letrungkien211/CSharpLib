@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0</TargetFrameworks>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.2.2</Version>
+    <Version>1.2.3</Version>
     <Authors>letrungkien211</Authors>
     <Description>Execute exe wrapper</Description>
     <PackageReleaseNotes></PackageReleaseNotes>

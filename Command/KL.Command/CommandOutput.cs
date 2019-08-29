@@ -6,11 +6,6 @@ namespace KL.Command
     public class CommandOutput
     {
         /// <summary>
-        /// Output status
-        /// </summary>
-        public string Status { get; set; }
-
-        /// <summary>
         /// Stdout
         /// </summary>
         public string StdOut { get; set; }
@@ -29,26 +24,5 @@ namespace KL.Command
         /// Final command which is executed
         /// </summary>
         public string FinalCommand { get; set; }
-    }
-
-    /// <summary>
-    /// Output status
-    /// </summary>
-    public enum OutputStatus
-    {
-        /// <summary>
-        /// Unknown. Not set.
-        /// </summary>
-        Unknown,
-
-        /// <summary>
-        /// Success
-        /// </summary>
-        Success,
-
-        /// <summary>
-        /// Start failed
-        /// </summary>
-        StartFailed
     }
 }
