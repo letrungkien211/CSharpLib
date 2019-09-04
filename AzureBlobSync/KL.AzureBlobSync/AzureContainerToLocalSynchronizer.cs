@@ -43,115 +43,111 @@ namespace KL.AzureBlobSync
         {
             BlobContinuationToken blobContinuationToken = null;
             var ret = new List<FolderItemSyncResult>();
-            var semaphoreSlim = new SemaphoreSlim(Parallel);
-            while (!cancellationToken.IsCancellationRequested)
+            using (var semaphoreSlim = new SemaphoreSlim(Parallel))
             {
-                var blobs = await Container.ListBlobsSegmentedAsync(Prefix,
-                    true,
-                    BlobListingDetails.None,
-                    null,
-                    blobContinuationToken, null, null, cancellationToken).ConfigureAwait(false);
-                blobContinuationToken = blobs.ContinuationToken;
-
-                foreach (var blob in blobs.Results)
+                var tasks = new List<Task>();
+                while (!cancellationToken.IsCancellationRequested)
                 {
-                    if (cancellationToken.IsCancellationRequested)
-                        break;
-                    if (!(blob is CloudBlockBlob cloudBlockBlob)) continue;
+                    var blobs = await Container.ListBlobsSegmentedAsync(Prefix,
+                        true,
+                        BlobListingDetails.None,
+                        null,
+                        blobContinuationToken, null, null, cancellationToken).ConfigureAwait(false);
+                    blobContinuationToken = blobs.ContinuationToken;
 
-                    var nameWithoutPrefix = cloudBlockBlob.Name.Substring(Prefix.Length);
-                    var localPath = Path.Combine(TargetLocalFolder, nameWithoutPrefix);
-                    var fileInfo = new FileInfo(localPath);
-                    var diff = false;
-                    if (!fileInfo.Exists)
+                    foreach (var blob in blobs.Results)
                     {
-                        var directory = fileInfo.Directory;
-                        diff = true;
+                        if (cancellationToken.IsCancellationRequested)
+                            break;
+                        if (!(blob is CloudBlockBlob cloudBlockBlob)) continue;
 
-                        if (directory != null && !directory.Exists)
+                        var nameWithoutPrefix = cloudBlockBlob.Name.Substring(Prefix.Length);
+                        var localPath = Path.Combine(TargetLocalFolder, nameWithoutPrefix);
+                        var fileInfo = new FileInfo(localPath);
+                        var diff = false;
+                        if (!fileInfo.Exists)
                         {
-                            directory.Create();
-                        }
-                    }
-                    else
-                    {
-                        if (fileInfo.LastWriteTimeUtc < cloudBlockBlob.Properties.LastModified)
-                        {
+                            var directory = fileInfo.Directory;
                             diff = true;
+
+                            if (directory != null && !directory.Exists)
+                            {
+                                directory.Create();
+                            }
+                        }
+                        else
+                        {
+                            if (fileInfo.LastWriteTimeUtc < cloudBlockBlob.Properties.LastModified)
+                            {
+                                diff = true;
+                            }
+                        }
+
+                        if (diff)
+                        {
+                            await semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
+
+                            var downloadTask = cloudBlockBlob.DownloadToFileAsync(localPath, FileMode.Create, null, null, null, null, cancellationToken)
+                                        .ContinueWith(result =>
+                                        {
+                                            if (result.Status == TaskStatus.RanToCompletion)
+                                            {
+                                                if (!fileInfo.Exists)
+                                                {
+                                                    fileInfo = new FileInfo(localPath);
+                                                }
+                                                ret.Add(new FolderItemSyncResult()
+                                                {
+                                                    Path = nameWithoutPrefix,
+                                                    LastModified = fileInfo.LastWriteTimeUtc,
+                                                    Ex = null,
+                                                    Result = FolderItemSyncResultEnum.UpdateSuccess
+                                                });
+                                            }
+                                            else
+                                            {
+                                                try
+                                                {
+                                                    if (File.Exists(localPath))
+                                                        File.Delete(localPath);
+                                                }
+                                                catch
+                                                {
+                                                    //
+                                                }
+                                                ret.Add(new FolderItemSyncResult()
+                                                {
+                                                    Path = nameWithoutPrefix,
+                                                    LastModified = fileInfo.LastWriteTimeUtc,
+                                                    Ex = result.Exception,
+                                                    Result = FolderItemSyncResultEnum.UpdateFailure
+                                                });
+                                            }
+                                            semaphoreSlim.Release();
+                                        });
+                            tasks.Add(downloadTask);
+                        }
+                        else
+                        {
+                            ret.Add(new FolderItemSyncResult()
+                            {
+                                Path = nameWithoutPrefix,
+                                LastModified = fileInfo.LastWriteTimeUtc,
+                                Ex = null,
+                                Result = FolderItemSyncResultEnum.Skip
+                            });
                         }
                     }
 
-                    if (diff)
+                    if (blobContinuationToken == null)
                     {
-                        await semaphoreSlim.WaitAsync(cancellationToken).ConfigureAwait(false);
-                        cloudBlockBlob.DownloadToFileAsync(localPath, FileMode.Create, null, null, null, null, cancellationToken)
-                                    .ContinueWith(result =>
-                                    {
-                                        if (result.Status == TaskStatus.RanToCompletion)
-                                        {
-                                            if (!fileInfo.Exists)
-                                            {
-                                                fileInfo = new FileInfo(localPath);
-                                            }
-                                            ret.Add(new FolderItemSyncResult()
-                                            {
-                                                Path = nameWithoutPrefix,
-                                                LastModified = fileInfo.LastWriteTimeUtc,
-                                                Ex = null,
-                                                Result = FolderItemSyncResultEnum.UpdateSuccess
-                                            });
-                                        }
-                                        else
-                                        {
-                                            try
-                                            {
-                                                if (File.Exists(localPath))
-                                                    File.Delete(localPath);
-                                            }
-                                            catch
-                                            {
-                                                //
-                                            }
-                                            ret.Add(new FolderItemSyncResult()
-                                            {
-                                                Path = nameWithoutPrefix,
-                                                LastModified = fileInfo.LastWriteTimeUtc,
-                                                Ex = result.Exception,
-                                                Result = FolderItemSyncResultEnum.UpdateFailure
-                                            });
-                                        }
-                                        semaphoreSlim.Release();
-                                    }).GetAwaiter();
-
-                    }
-                    else
-                    {
-                        ret.Add(new FolderItemSyncResult()
-                        {
-                            Path = nameWithoutPrefix,
-                            LastModified = fileInfo.LastWriteTimeUtc,
-                            Ex = null,
-                            Result = FolderItemSyncResultEnum.Skip
-                        });
+                        break;
                     }
                 }
 
-                if (blobContinuationToken == null)
-                {
-                    break;
-                }
+                await Task.WhenAll(tasks).ConfigureAwait(false);
+                return ret;
             }
-
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                if (semaphoreSlim.CurrentCount != Parallel)
-                    await Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).ContinueWith((_) => { });
-                else
-                {
-                    break;
-                }
-            }
-            return ret;
         }
     }
 }
