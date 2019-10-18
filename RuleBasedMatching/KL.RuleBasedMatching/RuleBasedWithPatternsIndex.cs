@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
+
 [assembly: InternalsVisibleTo("KL.RuleBasedMatching.Tests")]
 namespace KL.RuleBasedMatching
 {
@@ -41,22 +42,20 @@ namespace KL.RuleBasedMatching
             }
         }
 
-        internal static bool IsPattern(string str)
-        {
-            return str.StartsWith("{") && str.EndsWith("}");
-        }
         /// <summary>
         /// Add matching rule
         /// </summary>
         /// <param name="matchingRuleItem"></param>
         public void Add(MatchingRuleItem matchingRuleItem)
         {
+            var keywords = matchingRuleItem.KeyWords.SplitPatterns().ToList();
+
             switch (matchingRuleItem.Type)
             {
                 case MatchingRuleType.Perfect:
-                    var key = matchingRuleItem.KeyWords.First();
+                    var key = keywords.First();
 
-                    if (!IsPattern(key))
+                    if (!key.IsPattern())
                     {
                         if (!Perfect.TryGetValue(key, out var list))
                         {
@@ -82,13 +81,14 @@ namespace KL.RuleBasedMatching
                         throw new KeyNotFoundException($"Pattern={key} is not found");
                     }
                     break;
+                case MatchingRuleType.Pattern:
                 case MatchingRuleType.Contain:
-                    var indexKeyWord = matchingRuleItem.KeyWords.First();
-                    foreach (var keyword in matchingRuleItem.KeyWords.Skip(1))
+                    var indexKeyWord = keywords.First();
+                    foreach (var keyword in keywords.Skip(1))
                     {
-                        if (!IsPattern(keyword))
+                        if (!keyword.IsPattern())
                         {
-                            if (IsPattern(indexKeyWord))
+                            if (indexKeyWord.IsPattern())
                             {
                                 indexKeyWord = keyword;
                             }
@@ -102,7 +102,7 @@ namespace KL.RuleBasedMatching
                         }
                     }
 
-                    if (!IsPattern(indexKeyWord))
+                    if (!indexKeyWord.IsPattern())
                     {
                         var indexKey = indexKeyWord.Substring(0, Math.Min(indexKeyWord.Length, MaxIndexLen));
                         if (!RuleItems.TryGetValue(indexKey, out var containRuleItems))
@@ -138,13 +138,13 @@ namespace KL.RuleBasedMatching
         /// </summary>
         /// <param name="str">input string</param>
         /// <returns>list of rule items</returns>
-        public List<MatchingRuleItem> Retrieve(string str)
+        public List<MatchingRuleOutput> Retrieve(string str)
         {
             if (string.IsNullOrEmpty(str)) throw new ArgumentNullException(nameof(str));
 
             if (Perfect.TryGetValue(str, out var ret))
             {
-                return ret;
+                return ret.ToRuleOutputs();
             }
 
             // Fetch rule candidates
@@ -161,31 +161,87 @@ namespace KL.RuleBasedMatching
                 }
             }
 
+            candidates = candidates.OrderBy(x => { return x.Type == MatchingRuleType.Pattern ? 0 : 1; }).ToList();
+
             // Further check if rule matches or not
-            var matches = new List<MatchingRuleItem>();
+            var matches = new List<MatchingRuleOutput>();
+
             foreach (var candidate in candidates)
             {
-                if (candidate.KeyWords.All(keyword =>
+                var keywords = candidate.KeyWords.SplitPatterns().ToList();
+                switch (candidate.Type)
                 {
-                    if (!IsPattern(keyword))
-                    {
-                        return str.Contains(keyword);
-                    }
-                    else if(PatternToPhrases.TryGetValue(keyword, out var phrases))
-                    {
-                        return phrases.Any(str.Contains);
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }))
-                {
-                    matches.Add(candidate);
+                    case MatchingRuleType.Contain:
+                        if (keywords.All(keyword =>
+                        {
+                            if (!keyword.IsPattern())
+                            {
+                                return str.Contains(keyword);
+                            }
+                            else if (PatternToPhrases.TryGetValue(keyword, out var phrases))
+                            {
+                                return phrases.Any(str.Contains);
+                            }
+
+                            return false;
+                        }))
+                        {
+                            matches.Add(candidate.ToRuleOutput());
+                        }
+                        break;
+                    case MatchingRuleType.Pattern:
+                        var patternMatches = PatternMatches(str, keywords);
+                        if (patternMatches.Any())
+                            matches.Add(candidate.ToRuleOutput(patternMatches));
+                        break;
+                    default:
+                        break;
                 }
             }
-
             return matches;
+        }
+
+        public IEnumerable<string> PatternMatches(string str, List<string> keywords)
+        {
+            var stack = new Stack<Tuple<int, int, IEnumerable<string>>>();
+            stack.Push(new Tuple<int, int, IEnumerable<string>>(0, 0, new List<string>()));
+
+            while (stack.Any())
+            {
+                var temp = stack.Pop();
+                if (temp.Item1 >= str.Length)
+                    return temp.Item3;
+
+                if (temp.Item2 >= keywords.Count)
+                    continue;
+
+                var keyword = keywords[temp.Item2];
+
+                if (!keyword.IsPattern())
+                {
+
+                    if (str.StartsWith(temp.Item1, keyword))
+                    {
+                        stack.Push(new Tuple<int, int, IEnumerable<string>>(temp.Item1 + keyword.Length, temp.Item2 + 1, temp.Item3.Append(keyword)));
+                    }
+                }
+                else
+                {
+
+                    if (PatternToPhrases.TryGetValue(keyword, out var phrases))
+                    {
+
+                        foreach (var phrase in phrases)
+                        {
+                            if (str.StartsWith(temp.Item1, phrase))
+                            {
+                                stack.Push(new Tuple<int, int, IEnumerable<string>>(temp.Item1 + phrase.Length, temp.Item2 + 1, temp.Item3.Append(phrase)));
+                            }
+                        }
+                    }
+                }
+            }
+            return new List<string>();
         }
     }
 }

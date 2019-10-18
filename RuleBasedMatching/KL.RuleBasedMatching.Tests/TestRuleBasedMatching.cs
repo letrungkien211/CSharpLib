@@ -70,8 +70,8 @@ namespace KL.RuleBasedMatching.Tests
                 }
             }
             OutputHelper.WriteLine($"Elapsed={stopWatch.ElapsedMilliseconds}");
-
         }
+         
         [Fact]
         public void NotMatch()
         {
@@ -97,79 +97,6 @@ namespace KL.RuleBasedMatching.Tests
 
             Assert.Empty(ruleBasedIndex.Retrieve("ajfdkjfkd"));
             Assert.Empty(ruleBasedIndex.Retrieve("明日"));
-        }
-
-        [Fact]
-        public void MatchWithPatterns()
-        {
-            var ruleBasedIndex = RuleBasedIndexFactory.Create(5,
-                File.ReadLines("RuleBasedMatchingWithPatternsData-Patterns.tsv").Select(x => x.Split('\t'))
-                .Where(y => y.Length >= 3).ToDictionary(z => z[0], z => z.Skip(2).ToList())) as RuleBasedWithPatternsIndex;
-
-            foreach (var line in File.ReadLines("RuleBasedMatchingWithPatternsData.tsv"))
-            {
-                var splits = line.Split('\t');
-                if (splits.Length < 3)
-                {
-                    OutputHelper.WriteLine($"[ERROR] Invalid line: {line}");
-                    continue;
-                }
-
-                if (!Enum.TryParse(splits[1], true, out MatchingRuleType ruleType))
-                {
-                    OutputHelper.WriteLine($"[ERROR] Invalid ruletype: {line}");
-                    continue;
-                }
-
-                foreach (var temp in splits[0].Split('|'))
-                {
-                    ruleBasedIndex.Add(MatchingRuleItem.Create(temp.Split(';').Where(x => !string.IsNullOrEmpty(x)), splits.Skip(2), ruleType));
-                }
-            }
-
-            var stopWatch = Stopwatch.StartNew();
-            foreach (var perfect in ruleBasedIndex.Perfect)
-            {
-                var ret = ruleBasedIndex.Retrieve(perfect.Key).FirstOrDefault();
-                Assert.NotNull(ret);
-                OutputHelper.WriteLine($"Variation={perfect.Key}. Ret={JsonConvert.SerializeObject(ret)}");
-                Assert.Equal(MatchingRuleType.Perfect, ret.Type);
-            }
-
-            var random = new Random();
-            foreach (var ruleItems in ruleBasedIndex.RuleItems)
-            {
-                foreach (var ruleItem in ruleItems.Value)
-                {
-                    var randomKeyWords = ruleItem.KeyWords.Select(x =>
-                    {
-                        if (RuleBasedWithPatternsIndex.IsPattern(x))
-                        {
-                            ruleBasedIndex.PatternToPhrases.TryGetValue(x, out var phrases);
-                            return phrases[random.Next(phrases.Count)];
-                        }
-                        else
-                        {
-                            return x;
-                        }
-                    });
-                    var variations = new List<string>()
-                    {
-                        string.Join("", randomKeyWords),
-                        "fdfd" + string.Join("---", randomKeyWords) + "fdfdfd",
-                        string.Join(";fdfd", randomKeyWords.OrderBy(a=> Guid.NewGuid()))
-                    };
-
-                    foreach (var variation in variations)
-                    {
-                        var ret = ruleBasedIndex.Retrieve(variation).FirstOrDefault();
-                        Assert.NotNull(ret);
-                        OutputHelper.WriteLine($"Variation={variation}. Ret={JsonConvert.SerializeObject(ret)}");
-                        Assert.Equal(MatchingRuleType.Contain, ret.Type);
-                    }
-                }
-            }
-            OutputHelper.WriteLine($"Elapsed={stopWatch.ElapsedMilliseconds}");
         }
     }
 }

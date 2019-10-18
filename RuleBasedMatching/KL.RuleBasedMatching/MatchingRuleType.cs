@@ -17,6 +17,11 @@ namespace KL.RuleBasedMatching
         /// <summary>
         /// Contain keywords
         /// </summary>
-        Contain = 1
+        Contain = 1,
+
+        /// <summary>
+        /// Perfectly match a keyword with patterns supported
+        /// </summary>
+        Pattern = 2
     }
 }

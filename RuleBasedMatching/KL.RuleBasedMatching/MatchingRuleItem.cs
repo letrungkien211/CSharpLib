@@ -11,13 +11,13 @@ namespace KL.RuleBasedMatching
     public class MatchingRuleItem
     {
         [JsonConstructor]
-        private MatchingRuleItem()
+        protected MatchingRuleItem()
         {
         }
 
-        private MatchingRuleItem(IEnumerable<string> keyWords, object val, MatchingRuleType matchingRuleType)
+        protected MatchingRuleItem(IEnumerable<string> keyWords, IEnumerable<string> val, MatchingRuleType matchingRuleType)
         {
-            Value = val ?? throw new ArgumentNullException(nameof(keyWords));
+            Value = val?.ToList() ?? throw new ArgumentNullException(nameof(keyWords));
             KeyWords = keyWords?.Where(x => !string.IsNullOrEmpty(x)).ToList() ?? throw new ArgumentNullException(nameof(keyWords));
             if (!KeyWords.Any()) throw new ArgumentException($"{nameof(keyWords)} cannot be empty", nameof(keyWords));
 
@@ -31,7 +31,7 @@ namespace KL.RuleBasedMatching
         /// <param name="val">value that this rule holds</param>
         /// <param name="matchingRuleType">type of matching</param>
         /// <returns></returns>
-        public static MatchingRuleItem Create(IEnumerable<string> keyWords, object val, MatchingRuleType matchingRuleType)
+        public static MatchingRuleItem Create(IEnumerable<string> keyWords, IEnumerable<string> val, MatchingRuleType matchingRuleType)
         {
             return new MatchingRuleItem(keyWords, val, matchingRuleType);
         }
@@ -46,7 +46,7 @@ namespace KL.RuleBasedMatching
         /// Value that this rule holds
         /// </summary>
         [JsonProperty]
-        public object Value { get; private set; }
+        public List<string> Value { get; private set; }
 
         /// <summary>
         /// Matching rule type.

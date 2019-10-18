@@ -18,6 +18,6 @@ namespace KL.RuleBasedMatching
         /// </summary>
         /// <param name="str"></param>
         /// <returns></returns>
-        List<MatchingRuleItem> Retrieve(string str);
+        List<MatchingRuleOutput> Retrieve(string str);
     }
 }

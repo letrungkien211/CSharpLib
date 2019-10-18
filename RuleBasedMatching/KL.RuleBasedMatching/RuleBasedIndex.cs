@@ -59,6 +59,8 @@ namespace KL.RuleBasedMatching
                     }
                     containRuleItems.Add(matchingRuleItem);
                     break;
+                default:
+                    break;
             }
         }
 
@@ -67,13 +69,13 @@ namespace KL.RuleBasedMatching
         /// </summary>
         /// <param name="str">input string</param>
         /// <returns>list of rule items</returns>
-        public List<MatchingRuleItem> Retrieve(string str)
+        public List<MatchingRuleOutput> Retrieve(string str)
         {
             if (string.IsNullOrEmpty(str)) throw new ArgumentNullException(nameof(str));
 
             if (Perfect.TryGetValue(str, out var ret))
             {
-                return ret;
+                return ret.ToRuleOutputs();
             }
 
             // Fetch rule candidates
@@ -100,7 +102,7 @@ namespace KL.RuleBasedMatching
                 }
             }
 
-            return matches;
+            return matches.ToRuleOutputs();
         }
     }
 }
