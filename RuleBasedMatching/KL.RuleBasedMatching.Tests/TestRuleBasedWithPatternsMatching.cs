@@ -33,7 +33,7 @@ namespace KL.RuleBasedMatching.Tests
         [Theory]
         [InlineData("Test1aTepTest2b", "Test1a;Test2b")]
         [InlineData("Test1aTempTest2aTest1b", "Test1a;Test2a;Test1b")]
-
+        [InlineData("Test1aGOGOTest2a", "Test1a;Test2a")]
         public void MatchRegex(string str, string expected)
         {
             var ruleBasedIndex = CreateRuleBasedIndexWithPatterns();

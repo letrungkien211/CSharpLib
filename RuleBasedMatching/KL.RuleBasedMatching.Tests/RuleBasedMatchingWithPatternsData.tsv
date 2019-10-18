@@ -3,3 +3,4 @@
 {Test1}Temp	contain	NewParttern
 {Test1}Tep{Test2}	pattern	XPattern
 {Test1}Temp{Test2}{Test1}	pattern	XPattern
+{Test1}GOGO{Test2}	contain	XPattern

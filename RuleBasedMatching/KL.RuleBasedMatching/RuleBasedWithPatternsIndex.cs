@@ -172,27 +172,28 @@ namespace KL.RuleBasedMatching
                 switch (candidate.Type)
                 {
                     case MatchingRuleType.Contain:
-                        if (keywords.All(keyword =>
+                        var patternMatches1 = keywords.Select(keyword =>
                         {
                             if (!keyword.IsPattern())
                             {
-                                return str.Contains(keyword);
+                                return str.Contains(keyword) ? keyword : null;
                             }
                             else if (PatternToPhrases.TryGetValue(keyword, out var phrases))
                             {
-                                return phrases.Any(str.Contains);
+                                return phrases.FirstOrDefault(x => str.Contains(x));
                             }
-
-                            return false;
-                        }))
+                            return null;
+                        });
+                        if (!patternMatches1.Any(x => x == null))
                         {
-                            matches.Add(candidate.ToRuleOutput());
+                            matches.Add(candidate.ToRuleOutput(patternMatches1));
                         }
+
                         break;
                     case MatchingRuleType.Pattern:
-                        var patternMatches = PatternMatches(str, keywords);
-                        if (patternMatches.Any())
-                            matches.Add(candidate.ToRuleOutput(patternMatches));
+                        var patternMatches2 = PatternMatches(str, keywords);
+                        if (patternMatches2.Any())
+                            matches.Add(candidate.ToRuleOutput(patternMatches2));
                         break;
                     default:
                         break;
